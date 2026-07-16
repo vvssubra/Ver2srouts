@@ -45,7 +45,8 @@ async function fetchOvertimeData(userId: string): Promise<OvertimeData> {
   const { data: memberships, error: membershipError } = await supabase
     .from("branch_memberships")
     .select("branch_id")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
   if (membershipError) throw new Error(membershipError.message);
 
   const branchId = resolveBranchId(memberships ?? []);
@@ -102,6 +103,32 @@ export function OvertimeScreen() {
         vars.endTime
       );
       const hours = computeHours(startDateTime, endDateTime);
+
+      // Authoritative payroll-month/lateness computation — same RPC the
+      // web app's submitOt() calls, so a mobile submission lands with
+      // identical status/payroll_month/is_late_submission values instead
+      // of guessing them client-side. The isWithinSubmissionWindow check
+      // in handleSubmit is just a fast pre-check; this is the real one.
+      const { data: computed, error: computeError } = await supabase.rpc(
+        "compute_payroll_month",
+        {
+          _ot_date: vars.date,
+          _submitted_at: new Date().toISOString(),
+          _branch_id: data.branchId,
+        }
+      );
+      if (computeError) {
+        throw new Error(
+          "Couldn't verify the payroll period for this date. Please try again."
+        );
+      }
+      const computedRow = Array.isArray(computed) ? computed[0] : computed;
+      if (!computedRow?.is_allowed) {
+        throw new Error(
+          "This overtime request is outside the allowable submission period. Please contact HR for assistance."
+        );
+      }
+
       const insert = buildOvertimeInsert({
         userId: user.id,
         branchId: data.branchId,
@@ -111,12 +138,14 @@ export function OvertimeScreen() {
         hours,
         reason: vars.reason,
         submittedAt: new Date().toISOString(),
+        payrollMonth: computedRow.payroll_month ?? null,
+        isLateSubmission: !!computedRow.is_late,
       });
-      // The server enforces the submission window independently (via the
-      // enforce_ot_submission_window trigger) — the client-side check in
-      // handleSubmit is just a fast, friendly pre-check. If the two ever
-      // disagree, surface whatever Postgres says rather than pretending
-      // the insert always succeeds.
+      // The server also enforces the submission window independently (via
+      // the enforce_ot_submission_window trigger) — if it ever disagrees
+      // with the RPC result above (e.g. a race on the calendar month),
+      // surface whatever Postgres says rather than pretending the insert
+      // always succeeds.
       const { error } = await supabase.from("overtime_requests").insert(insert);
       if (error) throw new Error(error.message);
     },
@@ -169,7 +198,9 @@ export function OvertimeScreen() {
     );
   }
 
-  if (isError || !data) {
+  // See AttendanceScreen.tsx for why this is `&&` not `||`: a failed
+  // background refetch shouldn't blank out already-loaded content.
+  if (isError && !data) {
     return (
       <ScreenContainer>
         <ScreenHeader title="Overtime" subtitle="Requests and history" />

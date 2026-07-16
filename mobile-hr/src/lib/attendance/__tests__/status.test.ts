@@ -74,9 +74,17 @@ describe("buildLastSevenDays", () => {
     expect(days[6].date).toBe("2026-07-10");
   });
 
-  it("marks days with no matching row as absent", () => {
+  it("marks past days with no matching row as absent", () => {
     const days = buildLastSevenDays([], today);
-    expect(days.every((d) => d.status === "absent")).toBe(true);
+    expect(days.slice(1).every((d) => d.status === "absent")).toBe(true);
+  });
+
+  it("marks today with no matching row as pending, not absent (the day isn't over yet)", () => {
+    // Regression: showing "Absent" for a day still in progress directly
+    // contradicts the status card above this list, which correctly says
+    // "Not clocked in yet" for the same day.
+    const days = buildLastSevenDays([], today);
+    expect(days[0]).toMatchObject({ date: "2026-07-16", status: "pending" });
   });
 
   it("merges in existing rows and derives their status", () => {

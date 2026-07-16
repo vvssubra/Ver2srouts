@@ -1,19 +1,12 @@
 import type { ClaimType, StaffClaim, StaffClaimInsert } from "./hr-types";
 
+export { resolveBranchId } from "./branch";
+
 /**
  * Pure business logic for the Claims (self-service) screen. Kept free of
  * any Supabase/React Native imports so it can be unit tested without
  * rendering anything or touching the network.
- *
- * Note on `resolveBranchId`: `src/lib/attendance.ts` and `src/lib/leave.ts`
- * both define an equivalent helper, but those files are owned by other
- * agents working concurrently in this same repo. Rather than import
- * across module boundaries mid-build, the same tiny helper is duplicated
- * locally here, matching the precedent already set in `leave.ts`.
  */
-export function resolveBranchId(memberships: { branch_id: string }[]): string | null {
-  return memberships[0]?.branch_id ?? null;
-}
 
 // ---------------------------------------------------------------------------
 // Claim types

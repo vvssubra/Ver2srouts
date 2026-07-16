@@ -58,7 +58,8 @@ async function fetchLeaveContext(userId: string, year: number): Promise<LeaveCon
   const { data: memberships, error: membershipError } = await supabase
     .from("branch_memberships")
     .select("branch_id")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
   if (membershipError) throw new Error(membershipError.message);
 
   const branchId = resolveBranchId(memberships ?? []);
@@ -287,7 +288,9 @@ export function LeaveScreen() {
     );
   }
 
-  if (isError || !data) {
+  // See AttendanceScreen.tsx for why this is `&&` not `||`: a failed
+  // background refetch shouldn't blank out already-loaded content.
+  if (isError && !data) {
     return (
       <ScreenContainer>
         <ScreenHeader title="Leave" subtitle="Balance, requests, and history" />

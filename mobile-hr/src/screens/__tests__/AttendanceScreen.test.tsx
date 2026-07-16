@@ -22,6 +22,7 @@ function mockMakeChain(result: ChainResult) {
     eq: () => chain,
     gte: () => chain,
     lte: () => chain,
+    order: () => chain,
     maybeSingle: () => Promise.resolve(result),
     then: (resolve: (v: ChainResult) => void, reject: (e: unknown) => void) =>
       Promise.resolve(result).then(resolve, reject),
@@ -39,7 +40,9 @@ jest.mock("../../lib/supabase", () => ({
         return mockMakeChain({ data: [], error: null });
       }
       if (table === "staff_geofence_assignments") {
-        return mockMakeChain({ data: null, error: null });
+        // No `.maybeSingle()` call anymore — production code treats this
+        // as a possibly-multi-row query and tolerates zero/one/many rows.
+        return mockMakeChain({ data: [], error: null });
       }
       // staff_attendance
       return mockMakeChain({ data: [], error: null });
@@ -76,7 +79,9 @@ describe("AttendanceScreen", () => {
     await waitFor(() => expect(screen.getByText("Not clocked in yet")).toBeTruthy());
     expect(screen.getByText("Clock In")).toBeTruthy();
     expect(screen.getByText("Last 7 days")).toBeTruthy();
-    // 7 placeholder days, all "absent" since no attendance rows were mocked.
-    expect(screen.getAllByText("Absent")).toHaveLength(7);
+    // 7 placeholder days: today shows "Pending" (day still in progress,
+    // matching "Not clocked in yet" above), the other 6 show "Absent".
+    expect(screen.getAllByText("Absent")).toHaveLength(6);
+    expect(screen.getByText("Pending")).toBeTruthy();
   });
 });

@@ -36,6 +36,11 @@ jest.mock("../../lib/supabase", () => ({
       // overtime_requests
       return mockMakeChain({ data: [], error: null });
     },
+    rpc: () =>
+      Promise.resolve({
+        data: { payroll_month: "2026-07-01", is_late: false, is_allowed: true },
+        error: null,
+      }),
   },
 }));
 

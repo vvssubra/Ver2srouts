@@ -1,20 +1,13 @@
 import { formatStatusLabel } from "../components/ui/StatusPill";
 import type { OvertimeRequest, OvertimeRequestInsert } from "./hr-types";
 
+export { resolveBranchId } from "./branch";
+
 /**
  * Pure business logic for the Overtime (self-service) screen. Kept free of
  * any Supabase/React Native imports so it can be unit tested without
  * rendering anything or touching the network.
- *
- * Note on `resolveBranchId`: `src/lib/leave.ts` and `src/lib/claims.ts` both
- * define an equivalent helper, but those files are owned by other agents
- * working concurrently in this same repo. Rather than import across module
- * boundaries mid-build, the same tiny helper is duplicated locally here,
- * matching the precedent those two modules already set.
  */
-export function resolveBranchId(memberships: { branch_id: string }[]): string | null {
-  return memberships[0]?.branch_id ?? null;
-}
 
 // ---------------------------------------------------------------------------
 // Date / time string validation
@@ -83,7 +76,11 @@ export function buildShiftTimestamps(
   endTime: string
 ): { startDateTime: string; endDateTime: string } {
   const startDateTime = `${date}T${startTime}:00`;
-  const endDate = endTime <= startTime ? addOneDay(date) : date;
+  // Strictly less-than: an identical start/end time (a fat-finger, or a
+  // leftover default in both fields) must stay same-day so computeHours
+  // reports 0 and validation rejects it — not roll into a 24h "overnight"
+  // shift.
+  const endDate = endTime < startTime ? addOneDay(date) : date;
   const endDateTime = `${endDate}T${endTime}:00`;
   return { startDateTime, endDateTime };
 }
@@ -180,6 +177,29 @@ export function deriveOvertimeDisplayStatus(row: Pick<OvertimeRequest, "status">
 // Insert payload builder
 // ---------------------------------------------------------------------------
 
+/**
+ * The insert status for a fresh self-service overtime request, matching
+ * the web app's `submitOt` (src/lib/ot-service.ts): a late submission
+ * (OT dated in a month whose payroll has already been processed) starts
+ * one step further along than an on-time one, so approvers and the
+ * "late" filter on the web Overtime page both recognize it correctly.
+ * There is no plain "pending" status for overtime — using one (as this
+ * module previously did) makes the request invisible to that filter and
+ * to payroll-month bucketing.
+ */
+export function deriveOvertimeInsertStatus(
+  isLateSubmission: boolean
+): "pending_approval" | "late_pending_approval" {
+  return isLateSubmission ? "late_pending_approval" : "pending_approval";
+}
+
+/** First-of-month `yyyy-MM-01` for a `yyyy-MM-dd` date string. */
+export function firstOfMonthDateString(dateStr: string): string | null {
+  const parsed = parseYearMonth(dateStr);
+  if (!parsed) return null;
+  return `${parsed.year}-${String(parsed.month).padStart(2, "0")}-01`;
+}
+
 export interface OvertimeInsertInput {
   userId: string;
   branchId: string;
@@ -189,19 +209,21 @@ export interface OvertimeInsertInput {
   hours: number;
   reason: string;
   submittedAt: string;
+  /** Authoritative result of the `compute_payroll_month` RPC (mirrors the
+   *  server's `enforce_ot_submission_window` trigger) — the caller must
+   *  fetch this before building the insert; this module stays free of
+   *  Supabase imports so it can be unit tested without a network call. */
+  payrollMonth: string | null;
+  isLateSubmission: boolean;
 }
 
 /**
  * Builds the `overtime_requests` insert payload for a new self-service
- * request.
- *
- * Simplification: `ot_month`, `payroll_month`, and `is_late_submission`
- * are intentionally left out of the payload. They're optional columns
- * (the DB fills sensible defaults / the `enforce_ot_submission_window`
- * trigger derives them), and computing "which payroll month does this
- * land in" correctly depends on payroll cutoff rules this module doesn't
- * own. Best-effort date-only math here would risk silently disagreeing
- * with the server's authoritative computation, so this defers to it.
+ * request. `ot_month`, `payroll_month`, `is_late_submission`, and `status`
+ * are all derived here to match the web app's `submitOt` exactly — leaving
+ * them out (as this module previously did) caused mobile-submitted
+ * overtime to be silently invisible to the web app's "late" filter and to
+ * payroll-month bucketing.
  */
 export function buildOvertimeInsert(input: OvertimeInsertInput): OvertimeRequestInsert {
   return {
@@ -212,7 +234,10 @@ export function buildOvertimeInsert(input: OvertimeInsertInput): OvertimeRequest
     end_time: input.endDateTime,
     hours: input.hours,
     reason: input.reason.trim(),
-    status: "pending",
+    status: deriveOvertimeInsertStatus(input.isLateSubmission),
+    ot_month: firstOfMonthDateString(input.date),
+    payroll_month: input.payrollMonth,
+    is_late_submission: input.isLateSubmission,
     submitted_at: input.submittedAt,
   };
 }

@@ -1,21 +1,13 @@
 import type { CustomLeaveBalance, CustomLeaveType, LeaveBalance, LeaveRequest, LeaveRequestInsert } from "./hr-types";
 import type { Database } from "./database.types";
 
+export { resolveBranchId } from "./branch";
+
 /**
  * Pure business logic for the Leave (self-service) screen. Kept free of
  * any Supabase/React Native imports so it can be unit tested without
  * rendering anything or touching the network.
- *
- * Note on `resolveBranchId`: `src/lib/attendance.ts` defines an identical
- * helper, but that file is owned by another agent working concurrently in
- * this same repo. Rather than import across module boundaries mid-build
- * (and risk breaking if its signature changes under me), the tiny amount
- * of logic is duplicated locally here — same call this module family
- * already made once.
  */
-export function resolveBranchId(memberships: { branch_id: string }[]): string | null {
-  return memberships[0]?.branch_id ?? null;
-}
 
 // ---------------------------------------------------------------------------
 // Standard leave types

@@ -55,7 +55,9 @@ export function PayslipsScreen() {
     );
   }
 
-  if (isError || !data) {
+  // See AttendanceScreen.tsx for why this is `&&` not `||`: a failed
+  // background refetch shouldn't blank out already-loaded content.
+  if (isError && !data) {
     return (
       <ScreenContainer>
         <ScreenHeader title="Payslips" subtitle="Your pay history" />

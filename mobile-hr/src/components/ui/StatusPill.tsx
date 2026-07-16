@@ -3,7 +3,12 @@ import { color, font, radius } from "../../theme/tokens";
 
 export type StatusTone = "neutral" | "pending" | "positive" | "negative" | "info";
 
-const TONE_STYLES: Record<StatusTone, { bg: string; fg: string }> = {
+/**
+ * Exported so screens that build a bespoke banner/badge in a status tone
+ * (rather than rendering a `<StatusPill>` itself) still pull the same
+ * colors instead of hardcoding a second copy that can drift from this one.
+ */
+export const TONE_STYLES: Record<StatusTone, { bg: string; fg: string }> = {
   neutral: { bg: "#F1F0F6", fg: color.inkMuted },
   pending: { bg: "#FEF3E2", fg: "#B5680A" },
   positive: { bg: color.accentSoft, fg: color.accent },

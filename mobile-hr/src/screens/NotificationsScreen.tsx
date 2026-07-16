@@ -15,7 +15,15 @@ import { recognizeActionRoute, sortNotificationsByRecency } from "../lib/notific
 import { color, font, space } from "../theme/tokens";
 
 async function fetchNotifications(userId: string): Promise<NotificationRow[]> {
-  const { data, error } = await supabase.from("notifications").select("*").eq("user_id", userId);
+  // Matches the web app's own notification feed (src/hooks/use-notification-feed.ts):
+  // an archived row is meant to be gone from the inbox, not just marked read.
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", userId)
+    .is("archived_at", null)
+    .order("created_at", { ascending: false })
+    .limit(100);
   if (error) throw error;
   return sortNotificationsByRecency(data ?? []);
 }
@@ -80,7 +88,9 @@ export function NotificationsScreen() {
 
       {notificationsQuery.isLoading ? (
         <LoadingState label="Loading notifications…" />
-      ) : notificationsQuery.isError ? (
+      ) : notificationsQuery.isError && !notificationsQuery.data ? (
+        // `&& !data` (not just `isError`): a failed background refetch
+        // shouldn't blank out an already-loaded inbox.
         <ErrorState
           message="Couldn't load notifications. Check your connection and try again."
           onRetry={() => notificationsQuery.refetch()}

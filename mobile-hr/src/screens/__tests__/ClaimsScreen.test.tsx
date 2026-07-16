@@ -13,7 +13,6 @@ jest.mock("@expo/vector-icons", () => ({
 jest.mock("expo-image-picker", () => ({
   requestMediaLibraryPermissionsAsync: jest.fn(),
   launchImageLibraryAsync: jest.fn(),
-  MediaTypeOptions: { Images: "Images" },
 }));
 
 jest.mock("../../lib/auth/AuthProvider", () => ({

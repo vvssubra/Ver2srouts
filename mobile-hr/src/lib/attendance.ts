@@ -82,38 +82,42 @@ export function isWithinRadius(distanceMeters: number, radiusMeters: number): bo
 }
 
 /**
- * Staff-specific override takes priority over branch-wide locations. If
- * neither is configured (or active), returns null — meaning no geofence
- * is configured for this person, so clock-in should not be blocked.
+ * Staff-specific overrides take priority over branch-wide locations: if any
+ * active override rows exist, ALL of them become candidates (branch
+ * locations are ignored); otherwise every active branch-wide location is a
+ * candidate. Returns every candidate rather than picking just one — a
+ * branch can legitimately have more than one active location (e.g. "Main
+ * Center" and "Annex"), and a staff member can legitimately have more than
+ * one active override row (there is no DB constraint limiting either to a
+ * single row), so `evaluateGeofence` below checks the position against all
+ * of them rather than an arbitrarily-picked single one.
  */
-export function resolveApplicableGeofence(
+export function resolveApplicableGeofences(
   branchLocations: GeofenceLocation[],
-  staffOverride: StaffGeofenceAssignment | null
-): ResolvedGeofence | null {
-  if (staffOverride && staffOverride.is_active) {
-    return {
-      lat: staffOverride.lat,
-      lng: staffOverride.lng,
-      radius_meters: staffOverride.radius_meters,
-    };
+  staffOverrides: StaffGeofenceAssignment[]
+): ResolvedGeofence[] {
+  const activeOverrides = staffOverrides.filter((override) => override.is_active);
+  if (activeOverrides.length > 0) {
+    return activeOverrides.map((override) => ({
+      lat: override.lat,
+      lng: override.lng,
+      radius_meters: override.radius_meters,
+    }));
   }
 
-  const activeBranchLocation = branchLocations.find((location) => location.is_active);
-  if (activeBranchLocation) {
-    return {
-      lat: activeBranchLocation.lat,
-      lng: activeBranchLocation.lng,
-      radius_meters: activeBranchLocation.radius_meters,
-    };
-  }
-
-  return null;
+  return branchLocations
+    .filter((location) => location.is_active)
+    .map((location) => ({
+      lat: location.lat,
+      lng: location.lng,
+      radius_meters: location.radius_meters,
+    }));
 }
 
 export interface GeofenceCheckResult {
   /** Whether a geofence applies at all (branch or staff override). */
   configured: boolean;
-  /** True when no geofence is configured, or the position is inside it. */
+  /** True when no geofence is configured, or the position is inside ANY candidate. */
   withinRadius: boolean;
   distanceMeters: number | null;
   radiusMeters: number | null;
@@ -122,22 +126,41 @@ export interface GeofenceCheckResult {
 /**
  * Combines geofence resolution + haversine distance + radius check into a
  * single result the screen/mutation layer can branch on (block silently,
- * or require a selfie).
+ * or require a selfie). Checks the position against every candidate
+ * geofence and considers it "within radius" if it's inside ANY of them —
+ * being at a valid alternate work location must not be treated as outside
+ * the geofence just because a different location happened to be evaluated.
+ * For display, reports whichever geofence actually matched (or, if none
+ * matched, the nearest one, so the "you are Nm away" message is useful).
  */
 export function evaluateGeofence(
   position: LatLng,
-  geofence: ResolvedGeofence | null
+  geofences: ResolvedGeofence[]
 ): GeofenceCheckResult {
-  if (!geofence) {
+  if (geofences.length === 0) {
     return { configured: false, withinRadius: true, distanceMeters: null, radiusMeters: null };
   }
 
-  const distanceMeters = haversineMeters(position, { lat: geofence.lat, lng: geofence.lng });
+  const evaluated = geofences.map((geofence) => {
+    const distanceMeters = haversineMeters(position, { lat: geofence.lat, lng: geofence.lng });
+    return {
+      distanceMeters,
+      radiusMeters: geofence.radius_meters,
+      withinRadius: isWithinRadius(distanceMeters, geofence.radius_meters),
+    };
+  });
+
+  const matched = evaluated.find((candidate) => candidate.withinRadius);
+  const nearest = evaluated.reduce((closest, candidate) =>
+    candidate.distanceMeters < closest.distanceMeters ? candidate : closest
+  );
+  const chosen = matched ?? nearest;
+
   return {
     configured: true,
-    withinRadius: isWithinRadius(distanceMeters, geofence.radius_meters),
-    distanceMeters,
-    radiusMeters: geofence.radius_meters,
+    withinRadius: !!matched,
+    distanceMeters: chosen.distanceMeters,
+    radiusMeters: chosen.radiusMeters,
   };
 }
 
@@ -145,22 +168,14 @@ export function evaluateGeofence(
 // Branch resolution
 // ---------------------------------------------------------------------------
 
-/**
- * v1 simplifying assumption: a staff member may in principle belong to
- * more than one branch, but this app only clocks in/out against the first
- * `branch_memberships` row returned for them. Multi-branch staff are out
- * of scope for this phase.
- */
-export function resolveBranchId(memberships: { branch_id: string }[]): string | null {
-  return memberships[0]?.branch_id ?? null;
-}
+export { resolveBranchId } from "./branch";
 
 // ---------------------------------------------------------------------------
 // Clock status (today) + attendance day rollups
 // ---------------------------------------------------------------------------
 
 export type ClockStatus = "not_clocked_in" | "clocked_in" | "clocked_out";
-export type DayStatus = "absent" | "present" | "completed";
+export type DayStatus = "absent" | "present" | "completed" | "pending";
 
 export interface AttendanceDayRow {
   date: string;
@@ -193,7 +208,12 @@ export interface AttendanceDayView extends AttendanceDayRow {
 /**
  * Builds a fixed 7-entry list (today first, then the preceding 6 days)
  * merging whatever `staff_attendance` rows exist with placeholders for
- * days with no row at all (shown as "absent").
+ * days with no row at all (shown as "absent" — except today, which is
+ * still in progress and shown as "pending" instead: a not-yet-clocked-in
+ * day that hasn't ended yet is not the same thing as a day that ended
+ * with no attendance, and showing both as "Absent" directly contradicts
+ * the status card above this list, which correctly says "Not clocked in
+ * yet" rather than implying the day is already over).
  */
 export function buildLastSevenDays(
   rows: AttendanceDayRow[],
@@ -205,11 +225,12 @@ export function buildLastSevenDays(
   for (let i = 0; i < 7; i++) {
     const date = format(subDays(today, i), "yyyy-MM-dd");
     const row = byDate.get(date) ?? null;
+    const status = deriveDayStatus(row);
     days.push({
       date,
       clock_in: row?.clock_in ?? null,
       clock_out: row?.clock_out ?? null,
-      status: deriveDayStatus(row),
+      status: i === 0 && status === "absent" ? "pending" : status,
     });
   }
   return days;

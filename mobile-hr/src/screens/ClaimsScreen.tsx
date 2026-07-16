@@ -40,7 +40,8 @@ async function fetchClaimsData(userId: string): Promise<ClaimsData> {
   const { data: memberships, error: membershipError } = await supabase
     .from("branch_memberships")
     .select("branch_id")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
   if (membershipError) throw new Error(membershipError.message);
 
   const branchId = resolveBranchId(memberships ?? []);
@@ -136,7 +137,9 @@ export function ClaimsScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      // `MediaTypeOptions` is deprecated in this SDK version in favor of a
+      // plain `MediaType[]`.
+      mediaTypes: ["images"],
       quality: 0.6,
       allowsEditing: false,
     });
@@ -165,7 +168,9 @@ export function ClaimsScreen() {
     );
   }
 
-  if (isError || !data) {
+  // See AttendanceScreen.tsx for why this is `&&` not `||`: a failed
+  // background refetch shouldn't blank out already-loaded content.
+  if (isError && !data) {
     return (
       <ScreenContainer>
         <ScreenHeader title="Claims" subtitle="Expense reimbursements" />

@@ -2,7 +2,7 @@ import {
   evaluateGeofence,
   haversineMeters,
   isWithinRadius,
-  resolveApplicableGeofence,
+  resolveApplicableGeofences,
   type GeofenceLocation,
   type StaffGeofenceAssignment,
 } from "../../attendance";
@@ -61,12 +61,20 @@ describe("isWithinRadius", () => {
   });
 });
 
-describe("resolveApplicableGeofence", () => {
+describe("resolveApplicableGeofences", () => {
   const branchLocation: GeofenceLocation = {
     id: "loc-1",
     lat: 1.3,
     lng: 103.8,
     radius_meters: 100,
+    is_active: true,
+  };
+
+  const secondBranchLocation: GeofenceLocation = {
+    id: "loc-2",
+    lat: 1.31,
+    lng: 103.81,
+    radius_meters: 80,
     is_active: true,
   };
 
@@ -77,32 +85,35 @@ describe("resolveApplicableGeofence", () => {
     is_active: true,
   };
 
-  it("prefers an active staff override over an active branch location", () => {
-    const result = resolveApplicableGeofence([branchLocation], override);
-    expect(result).toEqual({ lat: 1.35, lng: 103.9, radius_meters: 25 });
+  it("prefers active staff overrides over branch locations, ignoring branch locations entirely", () => {
+    const result = resolveApplicableGeofences([branchLocation, secondBranchLocation], [override]);
+    expect(result).toEqual([{ lat: 1.35, lng: 103.9, radius_meters: 25 }]);
   });
 
-  it("falls back to the active branch location when there is no override", () => {
-    const result = resolveApplicableGeofence([branchLocation], null);
-    expect(result).toEqual({ lat: 1.3, lng: 103.8, radius_meters: 100 });
+  it("falls back to every active branch location when there is no override", () => {
+    const result = resolveApplicableGeofences([branchLocation, secondBranchLocation], []);
+    expect(result).toEqual([
+      { lat: 1.3, lng: 103.8, radius_meters: 100 },
+      { lat: 1.31, lng: 103.81, radius_meters: 80 },
+    ]);
   });
 
-  it("falls back to the active branch location when the override is inactive", () => {
+  it("falls back to branch locations when the only override is inactive", () => {
     const inactiveOverride: StaffGeofenceAssignment = { ...override, is_active: false };
-    const result = resolveApplicableGeofence([branchLocation], inactiveOverride);
-    expect(result).toEqual({ lat: 1.3, lng: 103.8, radius_meters: 100 });
+    const result = resolveApplicableGeofences([branchLocation], [inactiveOverride]);
+    expect(result).toEqual([{ lat: 1.3, lng: 103.8, radius_meters: 100 }]);
   });
 
-  it("returns null when neither an override nor an active branch location exists", () => {
+  it("returns an empty array when neither an override nor an active branch location exists", () => {
     const inactiveBranch: GeofenceLocation = { ...branchLocation, is_active: false };
-    expect(resolveApplicableGeofence([inactiveBranch], null)).toBeNull();
-    expect(resolveApplicableGeofence([], null)).toBeNull();
+    expect(resolveApplicableGeofences([inactiveBranch], [])).toEqual([]);
+    expect(resolveApplicableGeofences([], [])).toEqual([]);
   });
 });
 
 describe("evaluateGeofence", () => {
   it("does not block clock-in when no geofence is configured", () => {
-    const result = evaluateGeofence({ lat: 1, lng: 1 }, null);
+    const result = evaluateGeofence({ lat: 1, lng: 1 }, []);
     expect(result).toEqual({
       configured: false,
       withinRadius: true,
@@ -113,19 +124,37 @@ describe("evaluateGeofence", () => {
 
   it("reports within-radius when close enough", () => {
     const geofence = { lat: 1.3, lng: 103.8, radius_meters: 200 };
-    const result = evaluateGeofence({ lat: 1.3, lng: 103.8 }, geofence);
+    const result = evaluateGeofence({ lat: 1.3, lng: 103.8 }, [geofence]);
     expect(result.configured).toBe(true);
     expect(result.withinRadius).toBe(true);
     expect(result.distanceMeters).toBeCloseTo(0, 3);
     expect(result.radiusMeters).toBe(200);
   });
 
-  it("reports outside-radius when far enough away", () => {
+  it("reports outside-radius when far enough away from the only candidate", () => {
     const geofence = { lat: 0, lng: 0, radius_meters: 50 };
-    const result = evaluateGeofence({ lat: 0.01, lng: 0 }, geofence); // ~1112m away
+    const result = evaluateGeofence({ lat: 0.01, lng: 0 }, [geofence]); // ~1112m away
     expect(result.configured).toBe(true);
     expect(result.withinRadius).toBe(false);
     expect(result.distanceMeters).toBeGreaterThan(1000);
     expect(result.radiusMeters).toBe(50);
+  });
+
+  it("is within-radius if ANY candidate matches, even when it isn't the nearest", () => {
+    const far = { lat: 0, lng: 0, radius_meters: 50 }; // ~1112m away, not matched
+    const near = { lat: 0.01, lng: 0, radius_meters: 200 }; // 0m away, matched
+    const result = evaluateGeofence({ lat: 0.01, lng: 0 }, [far, near]);
+    expect(result.withinRadius).toBe(true);
+    expect(result.radiusMeters).toBe(200);
+  });
+
+  it("reports the nearest candidate's distance when none match", () => {
+    const distant = { lat: 0.1, lng: 0, radius_meters: 10 };
+    const closer = { lat: 0.02, lng: 0, radius_meters: 10 };
+    const result = evaluateGeofence({ lat: 0, lng: 0 }, [distant, closer]);
+    expect(result.withinRadius).toBe(false);
+    expect(result.radiusMeters).toBe(10);
+    // closer candidate (~2224m) should win over distant (~11119m)
+    expect(result.distanceMeters).toBeLessThan(3000);
   });
 });

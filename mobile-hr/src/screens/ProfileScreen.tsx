@@ -223,7 +223,9 @@ export function ProfileScreen() {
     );
   }
 
-  if (isError || !data) {
+  // See AttendanceScreen.tsx for why this is `&&` not `||`: a failed
+  // background refetch shouldn't blank out already-loaded content.
+  if (isError && !data) {
     return (
       <ScreenContainer>
         <ScreenHeader title="Profile" subtitle="Your details and documents" />

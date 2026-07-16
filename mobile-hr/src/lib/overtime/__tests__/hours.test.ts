@@ -54,4 +54,17 @@ describe("buildShiftTimestamps", () => {
       endDateTime: "2027-01-01T01:00:00",
     });
   });
+
+  it("keeps an identical start/end time same-day instead of a 24h overnight roll", () => {
+    // Regression: `endTime <= startTime` used to treat this as a valid
+    // overnight shift and report a clean 24.00 hours; it must stay
+    // same-day so computeHours returns 0 and validation rejects it.
+    expect(buildShiftTimestamps("2026-07-16", "09:00", "09:00")).toEqual({
+      startDateTime: "2026-07-16T09:00:00",
+      endDateTime: "2026-07-16T09:00:00",
+    });
+    expect(
+      computeHours("2026-07-16T09:00:00", "2026-07-16T09:00:00")
+    ).toBe(0);
+  });
 });

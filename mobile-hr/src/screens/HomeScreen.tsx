@@ -9,6 +9,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState } from "../components/ui/ErrorState";
 import { LoadingState } from "../components/ui/LoadingState";
 import { Card } from "../components/ui/Card";
+import { TONE_STYLES } from "../components/ui/StatusPill";
 import { useAuth } from "../lib/auth/AuthProvider";
 import { supabase } from "../lib/supabase";
 import type { LeaveBalance, StaffAttendance } from "../lib/hr-types";
@@ -89,7 +90,7 @@ const CLOCK_STATUS_VISUAL: Record<
   ReturnType<typeof deriveClockStatus>,
   { icon: keyof typeof Ionicons.glyphMap; bg: string; fg: string }
 > = {
-  not_clocked_in: { icon: "time-outline", bg: "#F1F0F6", fg: color.inkMuted },
+  not_clocked_in: { icon: "time-outline", bg: TONE_STYLES.neutral.bg, fg: color.inkMuted },
   clocked_in: { icon: "radio-button-on", bg: color.primarySoft, fg: color.primary },
   completed: { icon: "checkmark-circle", bg: color.accentSoft, fg: color.accent },
 };
@@ -181,7 +182,9 @@ export function HomeScreen() {
 
       {dashboardQuery.isLoading ? (
         <LoadingState label="Loading your dashboard…" />
-      ) : dashboardQuery.isError ? (
+      ) : dashboardQuery.isError && !dashboardQuery.data ? (
+        // `&& !data` (not just `isError`): a failed background refetch
+        // shouldn't blank out an already-loaded dashboard.
         <ErrorState
           message="Couldn't load your dashboard. Check your connection and try again."
           onRetry={() => dashboardQuery.refetch()}
@@ -252,9 +255,9 @@ export function HomeScreen() {
                 onPress={() => navigation.getParent()?.navigate("LeaveTab")}
                 style={({ pressed }) => [styles.pendingCard, pressed && styles.actionItemPressed]}
               >
-                <Ionicons name="alert-circle-outline" size={18} color="#B5680A" />
+                <Ionicons name="alert-circle-outline" size={18} color={TONE_STYLES.pending.fg} />
                 <Text style={styles.pendingText}>{pendingMessage}</Text>
-                <Ionicons name="chevron-forward" size={16} color="#B5680A" />
+                <Ionicons name="chevron-forward" size={16} color={TONE_STYLES.pending.fg} />
               </Pressable>
             </View>
           ) : null}
@@ -392,7 +395,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: space.sm,
-    backgroundColor: "#FEF3E2",
+    backgroundColor: TONE_STYLES.pending.bg,
     borderRadius: radius.lg,
     paddingVertical: space.md,
     paddingHorizontal: space.lg,
@@ -401,6 +404,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: font.medium,
     fontSize: 13.5,
-    color: "#B5680A",
+    color: TONE_STYLES.pending.fg,
   },
 });

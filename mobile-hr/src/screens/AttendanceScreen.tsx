@@ -12,7 +12,7 @@ import { ErrorState } from "../components/ui/ErrorState";
 import { LoadingState } from "../components/ui/LoadingState";
 import { TextField } from "../components/ui/TextField";
 import { Button } from "../components/ui/Button";
-import { StatusPill, toneForStatus, formatStatusLabel } from "../components/ui/StatusPill";
+import { StatusPill, toneForStatus, formatStatusLabel, TONE_STYLES } from "../components/ui/StatusPill";
 import { useAuth } from "../lib/auth/AuthProvider";
 import { supabase } from "../lib/supabase";
 import {
@@ -23,7 +23,7 @@ import {
   deriveClockStatus,
   evaluateGeofence,
   formatTimeOfDay,
-  resolveApplicableGeofence,
+  resolveApplicableGeofences,
   resolveBranchId,
   todayDateString,
   type AttendanceDayRow,
@@ -52,7 +52,7 @@ const CLOCK_STATUS_COPY: Record<ClockStatus, { title: string; message: string }>
 
 type AttendanceContext = {
   branchId: string | null;
-  geofence: ResolvedGeofence | null;
+  geofences: ResolvedGeofence[];
   todayRow: (AttendanceDayRow & { id: string; is_outside_geofence: boolean | null }) | null;
   weekRows: AttendanceDayRow[];
 };
@@ -61,29 +61,33 @@ async function fetchAttendanceContext(userId: string): Promise<AttendanceContext
   const { data: memberships, error: membershipError } = await supabase
     .from("branch_memberships")
     .select("branch_id")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
   if (membershipError) throw new Error(membershipError.message);
 
   const branchId = resolveBranchId(memberships ?? []);
   if (!branchId) {
-    return { branchId: null, geofence: null, todayRow: null, weekRows: [] };
+    return { branchId: null, geofences: [], todayRow: null, weekRows: [] };
   }
 
   const startDate = todayDateString(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000));
   const endDate = todayDateString();
 
-  const [locationsRes, overrideRes, attendanceRes] = await Promise.all([
+  const [locationsRes, overridesRes, attendanceRes] = await Promise.all([
     supabase
       .from("geofence_locations")
       .select("id, latitude, longitude, radius_meters, is_active")
       .eq("branch_id", branchId)
       .eq("is_active", true),
+    // No `.maybeSingle()`/`.single()`: there is no DB constraint limiting a
+    // staff member to one override row per branch (unlike
+    // branch_memberships, which does have a unique constraint), so this
+    // must tolerate zero, one, or many rows.
     supabase
       .from("staff_geofence_assignments")
       .select("geofence_locations(latitude, longitude, radius_meters, is_active)")
       .eq("user_id", userId)
-      .eq("branch_id", branchId)
-      .maybeSingle(),
+      .eq("branch_id", branchId),
     supabase
       .from("staff_attendance")
       .select("id, date, clock_in, clock_out, is_outside_geofence")
@@ -93,7 +97,7 @@ async function fetchAttendanceContext(userId: string): Promise<AttendanceContext
   ]);
 
   if (locationsRes.error) throw new Error(locationsRes.error.message);
-  if (overrideRes.error) throw new Error(overrideRes.error.message);
+  if (overridesRes.error) throw new Error(overridesRes.error.message);
   if (attendanceRes.error) throw new Error(attendanceRes.error.message);
 
   const branchLocations: GeofenceLocation[] = (locationsRes.data ?? []).map((row) => ({
@@ -104,20 +108,23 @@ async function fetchAttendanceContext(userId: string): Promise<AttendanceContext
     is_active: !!row.is_active,
   }));
 
-  const joinedLocation = overrideRes.data?.geofence_locations as
-    | { latitude: number; longitude: number; radius_meters: number; is_active: boolean | null }
-    | null
-    | undefined;
-  const staffOverride: StaffGeofenceAssignment | null = joinedLocation
-    ? {
-        lat: joinedLocation.latitude,
-        lng: joinedLocation.longitude,
-        radius_meters: joinedLocation.radius_meters,
-        is_active: !!joinedLocation.is_active,
-      }
-    : null;
+  const staffOverrides: StaffGeofenceAssignment[] = (overridesRes.data ?? [])
+    .map((row) => {
+      const joined = row.geofence_locations as
+        | { latitude: number; longitude: number; radius_meters: number; is_active: boolean | null }
+        | null
+        | undefined;
+      if (!joined) return null;
+      return {
+        lat: joined.latitude,
+        lng: joined.longitude,
+        radius_meters: joined.radius_meters,
+        is_active: !!joined.is_active,
+      };
+    })
+    .filter((override): override is StaffGeofenceAssignment => override !== null);
 
-  const geofence = resolveApplicableGeofence(branchLocations, staffOverride);
+  const geofences = resolveApplicableGeofences(branchLocations, staffOverrides);
 
   const weekRows: AttendanceDayRow[] = (attendanceRes.data ?? []).map((row) => ({
     date: row.date,
@@ -137,7 +144,7 @@ async function fetchAttendanceContext(userId: string): Promise<AttendanceContext
       }
     : null;
 
-  return { branchId, geofence, todayRow, weekRows };
+  return { branchId, geofences, todayRow, weekRows };
 }
 
 async function uploadSelfie(userId: string, uri: string): Promise<string> {
@@ -216,7 +223,7 @@ export function AttendanceScreen() {
       }
 
       const position = await getPosition();
-      const geofenceCheck = evaluateGeofence(position, data.geofence);
+      const geofenceCheck = evaluateGeofence(position, data.geofences);
 
       let selfieUrl: string | null = null;
       if (geofenceCheck.configured && !geofenceCheck.withinRadius) {
@@ -274,7 +281,11 @@ export function AttendanceScreen() {
     );
   }
 
-  if (isError || !data) {
+  // `isError && !data` (not `||`): a failed background refetch (e.g. a
+  // flaky pull-to-refresh) shouldn't blank out already-loaded content —
+  // only show the blocking error state when there's no cached data to
+  // fall back on.
+  if (isError && !data) {
     return (
       <ScreenContainer>
         <ScreenHeader title="Attendance" subtitle="Clock in and out" />
@@ -338,7 +349,7 @@ export function AttendanceScreen() {
 
           {data.todayRow?.is_outside_geofence ? (
             <View style={styles.flagRow}>
-              <Ionicons name="alert-circle-outline" size={15} color="#B5680A" />
+              <Ionicons name="alert-circle-outline" size={15} color={TONE_STYLES.pending.fg} />
               <Text style={styles.flagText}>Flagged as outside the work location today</Text>
             </View>
           ) : null}
@@ -478,7 +489,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#FEF3E2",
+    backgroundColor: TONE_STYLES.pending.bg,
     borderRadius: radius.sm,
     paddingVertical: 8,
     paddingHorizontal: space.sm,
@@ -487,7 +498,7 @@ const styles = StyleSheet.create({
   flagText: {
     fontFamily: font.medium,
     fontSize: 12,
-    color: "#B5680A",
+    color: TONE_STYLES.pending.fg,
     flex: 1,
   },
   actionErrorWrap: {

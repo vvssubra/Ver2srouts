@@ -28,6 +28,9 @@ function mockMakeChain(result: ChainResult) {
   const chain: Record<string, unknown> = {
     select: () => chain,
     eq: () => chain,
+    is: () => chain,
+    order: () => chain,
+    limit: () => chain,
     update: () => chain,
     then: (resolve: (v: ChainResult) => void, reject: (e: unknown) => void) =>
       Promise.resolve(result).then(resolve, reject),
