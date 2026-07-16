@@ -12,22 +12,28 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BrandMark } from "../components/ui/BrandMark";
 import { TextField } from "../components/ui/TextField";
 import { Button } from "../components/ui/Button";
+import { useAuth } from "../lib/auth/AuthProvider";
+import { REMEMBER_ME_KEY } from "../lib/auth/rememberMe";
 import { color, font, space } from "../theme/tokens";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type FieldErrors = { email?: string; password?: string };
+type NoticeTone = "info" | "error";
 
 export function LoginScreen() {
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeTone, setNoticeTone] = useState<NoticeTone>("info");
 
   const passwordRef = useRef<TextInput>(null);
 
@@ -39,22 +45,27 @@ export function LoginScreen() {
     return next;
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setNotice(null);
     const next = validate();
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
     setLoading(true);
-    setTimeout(() => {
+    const { error } = await signIn(email.trim(), password);
+    if (error) {
       setLoading(false);
-      setNotice(
-        "This draft isn't connected to Sprout accounts yet — sign-in will work once the backend is wired up."
-      );
-    }, 900);
+      setNoticeTone("error");
+      setNotice(error);
+      return;
+    }
+    await AsyncStorage.setItem(REMEMBER_ME_KEY, remember ? "1" : "0");
+    // No navigation call needed: the root navigator swaps to the main app
+    // as soon as AuthProvider's session state updates.
   }
 
   function handleForgotPassword() {
+    setNoticeTone("info");
     setNotice("Password reset isn't available in this preview yet.");
   }
 
@@ -88,9 +99,15 @@ export function LoginScreen() {
           </View>
 
           {notice ? (
-            <View style={styles.notice}>
-              <Ionicons name="information-circle" size={17} color={color.primary} />
-              <Text style={styles.noticeText}>{notice}</Text>
+            <View style={[styles.notice, noticeTone === "error" && styles.noticeError]}>
+              <Ionicons
+                name={noticeTone === "error" ? "alert-circle" : "information-circle"}
+                size={17}
+                color={noticeTone === "error" ? color.danger : color.primary}
+              />
+              <Text style={[styles.noticeText, noticeTone === "error" && styles.noticeTextError]}>
+                {notice}
+              </Text>
             </View>
           ) : null}
 
@@ -241,6 +258,12 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     lineHeight: 18,
     color: color.primaryDark,
+  },
+  noticeError: {
+    backgroundColor: color.dangerSoft,
+  },
+  noticeTextError: {
+    color: color.danger,
   },
   form: {
     marginBottom: space.xxl,
