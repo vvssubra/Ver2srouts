@@ -1,0 +1,4 @@
+age,domain_code,theme_name,english_word,bm_word,word_type,vocabulary_level,parent_example_sentence_en,parent_example_sentence_bm,teacher_prompt_en,teacher_prompt_bm,activity_context,active_status
+2,SE,,eat,makan,action_word,receptive,Time to eat!,Masa makan!,Use during snack time and meals.,Gunakan semasa snek dan makan.,Mealtime,true
+3,NT,,count,kira,action_word,expressive,Count with me: one two three.,Kira dengan saya: satu dua tiga.,Count steps and snacks.,Kira langkah dan snek.,Math,true
+4,CL,,explain,terangkan,action_word,expressive,Can you explain?,Boleh awak terangkan?,Invite extended answers.,Jemput jawapan panjang.,Inquiry,true

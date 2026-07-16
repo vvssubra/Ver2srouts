@@ -1,0 +1,1 @@
+UPDATE public.organization_branding SET parent_branding_version = now();

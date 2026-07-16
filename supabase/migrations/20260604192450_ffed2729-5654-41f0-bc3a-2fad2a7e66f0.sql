@@ -1,0 +1,1 @@
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS extra_emergency_contacts jsonb NOT NULL DEFAULT '[]'::jsonb;

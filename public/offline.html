@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>You're offline · Sprouts</title>
+    <meta name="theme-color" content="#43A047" />
+    <link rel="icon" href="/icon-parents-192.png" type="image/png" />
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; height: 100%; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: #F6FFF4;
+        color: #1F2937;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: max(env(safe-area-inset-top), 1.5rem) 1.5rem
+          max(env(safe-area-inset-bottom), 1.5rem);
+      }
+      .card {
+        max-width: 22rem;
+        width: 100%;
+        background: #ffffff;
+        border: 1px solid #DDEAD8;
+        border-radius: 1rem;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        box-shadow: 0 10px 30px -10px rgba(27, 94, 32, 0.15);
+      }
+      .icon { width: 72px; height: 72px; margin: 0 auto 1rem; display: block; border-radius: 18px; }
+      h1 { font-size: 1.25rem; margin: 0 0 0.5rem; color: #1B5E20; }
+      p { font-size: 0.95rem; line-height: 1.5; color: #6B7280; margin: 0 0 1.25rem; }
+      button {
+        font: inherit;
+        background: #43A047;
+        color: #fff;
+        border: 0;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+      }
+      button:active { background: #1B5E20; }
+      .hint { margin-top: 0.75rem; font-size: 0.8rem; color: #9CA3AF; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <img class="icon" src="/icon-parents-192.png" alt="Sprouts" />
+      <h1>You're offline</h1>
+      <p>Some updates may not be available until your connection returns.</p>
+      <button onclick="location.reload()">Try again</button>
+      <p class="hint">Sprouts by Little Green Hearts</p>
+    </main>
+  </body>
+</html>

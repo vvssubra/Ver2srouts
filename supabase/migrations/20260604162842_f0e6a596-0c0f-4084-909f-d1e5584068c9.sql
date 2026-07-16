@@ -1,0 +1,1 @@
+ALTER TABLE public.email_global_settings ADD COLUMN IF NOT EXISTS emails_enabled boolean NOT NULL DEFAULT true;

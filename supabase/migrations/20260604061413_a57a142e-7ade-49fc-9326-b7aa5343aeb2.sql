@@ -1,0 +1,1 @@
+ALTER TABLE public.email_global_settings ADD COLUMN IF NOT EXISTS welcome_kit_url text;

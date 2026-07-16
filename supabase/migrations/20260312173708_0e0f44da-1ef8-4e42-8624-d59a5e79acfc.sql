@@ -1,0 +1,1 @@
+ALTER TABLE public.lesson_plans ADD COLUMN daily_slot_id uuid REFERENCES public.daily_timetable_slots(id) ON DELETE SET NULL;

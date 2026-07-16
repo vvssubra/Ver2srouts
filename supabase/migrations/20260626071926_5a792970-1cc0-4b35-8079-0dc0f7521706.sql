@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Parents update own children health" ON public.students;

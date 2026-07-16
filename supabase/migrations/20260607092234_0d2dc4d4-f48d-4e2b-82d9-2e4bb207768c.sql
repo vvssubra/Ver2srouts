@@ -1,0 +1,1 @@
+ALTER VIEW public.v_school_calendar SET (security_invoker = true);

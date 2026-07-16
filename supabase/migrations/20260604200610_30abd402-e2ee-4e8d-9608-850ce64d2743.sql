@@ -1,0 +1,1 @@
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS father_email text, ADD COLUMN IF NOT EXISTS mother_email text;

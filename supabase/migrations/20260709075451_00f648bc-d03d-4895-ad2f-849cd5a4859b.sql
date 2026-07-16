@@ -1,0 +1,1 @@
+ALTER TABLE public.payroll_records ADD COLUMN IF NOT EXISTS absent_deduction NUMERIC(12,2) NOT NULL DEFAULT 0;

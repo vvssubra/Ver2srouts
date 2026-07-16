@@ -1,0 +1,27 @@
+{
+  "name": "Sprouts for Parents",
+  "short_name": "Sprouts Parents",
+  "id": "/install/parents",
+  "start_url": "/child?source=pwa-parent&app=parents",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#43A047",
+  "description": "Stay close to your child's learning journey at Little Green Hearts.",
+  "categories": ["education", "parenting", "lifestyle"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    { "name": "Learning Journey", "short_name": "Journey", "url": "/journey?source=pwa-shortcut&app=parents", "icons": [{ "src": "/icon-parents-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Chat", "short_name": "Chat", "url": "/parent-chat?source=pwa-shortcut&app=parents", "icons": [{ "src": "/icon-parents-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Fees", "short_name": "Fees", "url": "/parent-fees?source=pwa-shortcut&app=parents", "icons": [{ "src": "/icon-parents-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ],
+  "icons": [
+    { "src": "/icon-parents-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-parents-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-parents-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-parents-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

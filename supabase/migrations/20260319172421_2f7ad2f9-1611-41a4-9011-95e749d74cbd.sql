@@ -1,0 +1,1 @@
+ALTER TABLE public.payment_disputes ADD COLUMN IF NOT EXISTS payer_account_id uuid REFERENCES public.payer_accounts(id);

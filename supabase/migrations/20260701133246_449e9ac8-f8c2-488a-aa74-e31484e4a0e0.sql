@@ -1,0 +1,1 @@
+ALTER TABLE public.billing_config ADD COLUMN IF NOT EXISTS auto_generate_monthly_invoices boolean NOT NULL DEFAULT false;

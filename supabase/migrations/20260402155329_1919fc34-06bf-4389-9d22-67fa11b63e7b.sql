@@ -1,0 +1,1 @@
+ALTER TABLE public.lesson_objectives ADD COLUMN IF NOT EXISTS term integer DEFAULT NULL;

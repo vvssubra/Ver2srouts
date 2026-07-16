@@ -1,0 +1,1 @@
+ALTER TABLE public.marketing_spend ADD COLUMN IF NOT EXISTS results integer;

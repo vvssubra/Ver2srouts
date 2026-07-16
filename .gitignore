@@ -1,0 +1,34 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Local environment config
+# IMPORTANT: .env is intentionally NOT ignored. Lovable Cloud writes the
+# backend URL and publishable key into .env, and the published build needs
+# them baked in at build time. If .env is ignored, the live site throws
+# "supabaseUrl is required" at module load and users get stuck on the
+# splash. These are publishable keys — safe to ship to the browser.
+.env.local
+.env.*.local
+!.env.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

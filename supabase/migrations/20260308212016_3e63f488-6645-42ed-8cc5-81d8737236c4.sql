@@ -1,0 +1,11 @@
+
+ALTER TABLE public.attendance
+  ADD COLUMN IF NOT EXISTS temperature NUMERIC(4,1),
+  ADD COLUMN IF NOT EXISTS health_status TEXT DEFAULT 'healthy',
+  ADD COLUMN IF NOT EXISTS health_notes TEXT,
+  ADD COLUMN IF NOT EXISTS body_marks TEXT,
+  ADD COLUMN IF NOT EXISTS has_medication BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS medication_notes TEXT,
+  ADD COLUMN IF NOT EXISTS mood TEXT DEFAULT 'happy',
+  ADD COLUMN IF NOT EXISTS arrival_photo_url TEXT,
+  ADD COLUMN IF NOT EXISTS checked_by UUID;

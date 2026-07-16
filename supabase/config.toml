@@ -1,0 +1,105 @@
+project_id = "jrelnkamglefuztemczq"
+
+[functions]
+  [functions.admin-create-user]
+    verify_jwt = false
+  [functions.admin-delete-user]
+    verify_jwt = false
+  [functions.admin-manage-user]
+    verify_jwt = false
+  [functions.admin-generate-temp-password]
+    verify_jwt = false
+  [functions.assess-methodology]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.billplz-webhook]
+    verify_jwt = false
+  [functions.brainstorm-objectives]
+    verify_jwt = false
+  [functions.brainstorm-outcomes]
+    verify_jwt = false
+  [functions.classify-message]
+    verify_jwt = false
+  [functions.create-billplz-bill]
+    verify_jwt = false
+  [functions.create-checkout]
+    verify_jwt = false
+  [functions.detect-overdue-invoices]
+    verify_jwt = false
+  [functions.send-missed-chat-emails]
+    verify_jwt = false
+  [functions.extract-resource-content]
+    verify_jwt = false
+  [functions.generate-concern-flags]
+    verify_jwt = false
+  [functions.generate-curriculum-lesson]
+    verify_jwt = false
+  [functions.generate-holiday-calendar]
+    verify_jwt = false
+  [functions.generate-learning-story]
+    verify_jwt = false
+  [functions.generate-lesson-plan]
+    verify_jwt = false
+  [functions.generate-monthly-plan]
+    verify_jwt = false
+  [functions.generate-monthly-summary]
+    verify_jwt = false
+  [functions.generate-next-step]
+    verify_jwt = false
+  [functions.generate-parent-summary]
+    verify_jwt = false
+  [functions.generate-ptm-report]
+    verify_jwt = false
+  [functions.generate-readiness-snapshot]
+    verify_jwt = false
+  [functions.generate-recurring-invoices]
+    verify_jwt = false
+  [functions.generate-slot-lesson]
+    verify_jwt = false
+  [functions.generate-weekly-plan]
+    verify_jwt = false
+  [functions.generate-weekly-subject-plan]
+    verify_jwt = false
+  [functions.generate-yearly-plan]
+    verify_jwt = false
+  [functions.get-manifest]
+    verify_jwt = false
+  [functions.link-parent-by-code]
+    verify_jwt = false
+  [functions.parse-curriculum-document]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+
+[functions.send-transactional-email]
+verify_jwt = true
+
+[functions.preview-transactional-email]
+verify_jwt = false
+
+[functions.handle-email-unsubscribe]
+verify_jwt = false
+
+[functions.handle-email-suppression]
+verify_jwt = false
+  [functions.process-enrollment]
+    verify_jwt = false
+  [functions.refine-lesson-plan]
+    verify_jwt = false
+  [functions.refine-theme-bank]
+    verify_jwt = false
+  [functions.send-email]
+    verify_jwt = false
+  [functions.send-parent-invite]
+    verify_jwt = false
+  [functions.send-push-notification]
+    verify_jwt = false
+  [functions.stripe-webhook]
+    verify_jwt = false
+  [functions.suggest-observation-tags]
+    verify_jwt = false
+  [functions.summarize-child-growth]
+    verify_jwt = false
+  [functions.generate-class-differentiation]
+    verify_jwt = false

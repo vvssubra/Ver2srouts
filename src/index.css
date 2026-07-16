@@ -1,0 +1,277 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ─── Sprouts Design System v2 ─── */
+    /* Surfaces */
+    --background: 108 100% 98%;        /* Soft Mint #F6FFF4 */
+    --foreground: 217 33% 17%;         /* Slate Text #1F2937 */
+    --card: 0 0% 100%;
+    --card-foreground: 217 33% 17%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 33% 17%;
+
+    /* Brand */
+    --primary: 123 41% 45%;            /* Sprouts Green #43A047 */
+    --primary-foreground: 0 0% 100%;
+    --primary-deep: 123 57% 24%;       /* Deep Forest #1B5E20 */
+    --primary-soft: 88 50% 48%;        /* Fresh Leaf #7CB342 */
+    --primary-wash: 110 47% 94%;       /* Leaf Wash #EAF7E8 */
+
+    --secondary: 110 47% 94%;          /* Leaf Wash */
+    --secondary-foreground: 123 57% 24%;
+
+    --muted: 110 30% 96%;
+    --muted-foreground: 220 9% 46%;    /* Muted Text #6B7280 */
+
+    --accent: 88 50% 48%;              /* Fresh Leaf */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 1 77% 55%;          /* #E53935 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 101 25% 88%;             /* Soft Border #DDEAD8 */
+    --input: 101 25% 88%;
+    --ring: 123 41% 45%;
+
+    --radius: 0.875rem;
+
+    /* Role accents */
+    --role-super-admin: 123 57% 24%;
+    --role-franchisee: 123 57% 24%;
+    --role-admin: 123 57% 24%;
+    --role-teacher: 123 41% 45%;
+    --role-staff: 123 41% 45%;
+    --role-parent: 45 97% 58%;         /* Parent Yellow */
+
+    /* Semantic status */
+    --success: 123 46% 34%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 207 89% 61%;               /* AI Sky Blue */
+    --info-foreground: 0 0% 100%;
+
+    /* Sidebar (light premium) */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 217 33% 17%;
+    --sidebar-primary: 123 41% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 110 47% 94%;
+    --sidebar-accent-foreground: 123 57% 24%;
+    --sidebar-border: 101 25% 88%;
+    --sidebar-ring: 123 41% 45%;
+
+    /* Gradients & shadows */
+    --gradient-primary: linear-gradient(135deg, hsl(123 41% 45%), hsl(88 50% 48%));
+    --gradient-accent: linear-gradient(135deg, hsl(45 97% 58%), hsl(33 100% 65%));
+    --shadow-soft: 0 2px 8px -2px hsl(123 57% 24% / 0.08);
+    --shadow-card: 0 1px 3px hsl(123 57% 24% / 0.06), 0 4px 12px hsl(123 57% 24% / 0.04);
+    --shadow-premium: 0 10px 30px -10px hsl(123 41% 45% / 0.2);
+  }
+
+  /* ─── Role-based theming (applied via data-role on app root) ─── */
+  [data-role="parent"] {
+    --background: 50 100% 98%;         /* Cream Warm #FFFDF4 */
+    --primary: 45 97% 58%;             /* Parent Yellow */
+    --primary-foreground: 217 33% 17%;
+    --accent: 33 100% 65%;             /* Soft Orange */
+    --accent-foreground: 217 33% 17%;
+    --ring: 45 97% 58%;
+    --sidebar-primary: 45 97% 58%;
+    --sidebar-primary-foreground: 217 33% 17%;
+    --sidebar-accent: 50 90% 95%;
+    --sidebar-accent-foreground: 217 33% 17%;
+  }
+
+  [data-role="teacher"], [data-role="staff"] {
+    --background: 108 100% 98%;
+    --primary: 123 41% 45%;
+    --accent: 88 50% 48%;
+    --ring: 123 41% 45%;
+  }
+
+  [data-role="admin"], [data-role="franchisee"], [data-role="super_admin"] {
+    --background: 108 30% 98%;
+    --primary: 123 57% 24%;            /* Admin Deep Green */
+    --primary-foreground: 0 0% 100%;
+    --accent: 123 41% 45%;
+    --ring: 123 57% 24%;
+    --sidebar-primary: 123 57% 24%;
+  }
+
+  .dark {
+    --background: 123 20% 7%;
+    --foreground: 210 20% 95%;
+
+    --card: 220 25% 10%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 220 25% 10%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 123 41% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 20% 16%;
+    --secondary-foreground: 210 20% 95%;
+
+    --muted: 220 20% 14%;
+    --muted-foreground: 215 15% 55%;
+
+    --accent: 88 50% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 123 41% 55%;
+
+    --sidebar-background: 123 25% 6%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 123 41% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 123 25% 12%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 123 20% 14%;
+    --sidebar-ring: 123 41% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+/* PTM Report Print Styles */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  /* Hide sidebar, header, nav, buttons */
+  [data-sidebar],
+  header,
+  nav,
+  .sidebar-trigger,
+  button,
+  [role="tablist"],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Make main content full width */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  [data-sidebar="inset"] {
+    margin-left: 0 !important;
+    min-height: auto !important;
+  }
+
+  /* Card styling for print */
+  .print-report {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #ddd !important;
+    margin-bottom: 1rem;
+    padding: 1.5rem !important;
+    box-shadow: none !important;
+  }
+
+  .print-report h4 {
+    font-size: 14pt;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .print-report p,
+  .print-report li {
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+
+  /* Page header for print */
+  .print-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #333;
+  }
+
+  .print-header h1 {
+    font-size: 18pt;
+    font-weight: 700;
+  }
+
+  .print-header p {
+    font-size: 11pt;
+    color: #666;
+  }
+}
+
+/* ─── Mobile responsive utilities ─── */
+@layer utilities {
+  .page-header {
+    @apply flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between;
+  }
+  .page-title {
+    @apply text-lg sm:text-xl md:text-2xl font-bold;
+  }
+  .page-grid-4 {
+    @apply grid gap-3 grid-cols-2 lg:grid-cols-4;
+  }
+  .page-grid-3 {
+    @apply grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  /* ─── iOS / Android safe-area utilities (notch + home indicator) ─── */
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pl-safe { padding-left: env(safe-area-inset-left); }
+  .pr-safe { padding-right: env(safe-area-inset-right); }
+  .pb-safe-plus-2  { padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem); }
+  .pb-safe-plus-4  { padding-bottom: calc(env(safe-area-inset-bottom) + 1rem); }
+  .pb-safe-plus-16 { padding-bottom: calc(env(safe-area-inset-bottom) + 4rem); }
+  .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
+  .h-safe-bottom { height: env(safe-area-inset-bottom); }
+  .min-h-screen-safe { min-height: 100svh; }
+}
+
+/* ─── Mobile touch targets ─── */
+@media (max-width: 640px) {
+  .table-responsive {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Larger touch targets on mobile */
+  button, [role="button"], a {
+    min-height: 36px;
+  }
+  
+  /* Fix dialog widths on mobile */
+  [role="dialog"] > div {
+    max-width: calc(100vw - 2rem) !important;
+    margin: 1rem;
+  }
+}
