@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" href="/logo.png" type="image/png" />
+    <!-- iOS home-screen install: iOS ignores webmanifest icons and uses
+         apple-touch-icon. DynamicFavicon swaps this to the parent or
+         teacher icon at runtime; the Sprouts logo is the safe brand
+         fallback before that runs. -->
+    <link rel="manifest" href="/manifest-parents.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-parents.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-parents-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Sprouts" />
+    <meta name="theme-color" content="#43A047" />
+    <title>Sprouts by Little Green Hearts</title>
+    <meta name="description" content="Sprouts – AI-Powered Preschool Management by Little Green Hearts" />
+    <meta name="author" content="Little Green Hearts" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Sprouts by Little Green Hearts" />
+    <meta property="og:description" content="Sprouts – AI-Powered Preschool Management by Little Green Hearts" />
+    <meta property="og:image" content="/icon-parents-512.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sprouts by Little Green Hearts" />
+    <meta name="twitter:description" content="Sprouts – AI-Powered Preschool Management by Little Green Hearts" />
+    <meta name="twitter:image" content="/icon-parents-512.png" />
+    <script>
+      (function () {
+        function applyButtonStyle(button, primary) {
+          button.style.width = "min(320px, 100%)";
+          button.style.borderRadius = "14px";
+          button.style.padding = "12px 18px";
+          button.style.fontSize = "15px";
+          button.style.fontWeight = "700";
+          button.style.border = primary ? "0" : "1px solid rgba(27,94,32,0.25)";
+          button.style.background = primary ? "#43A047" : "#fff";
+          button.style.color = primary ? "#fff" : "#1B5E20";
+        }
+
+        function showStartupError() {
+          var splash = document.getElementById("app-boot-splash");
+          var root = document.getElementById("root");
+          if (!splash || !root) return;
+
+          root.replaceChildren();
+
+          var wrap = document.createElement("div");
+          wrap.style.minHeight = "100vh";
+          wrap.style.display = "flex";
+          wrap.style.flexDirection = "column";
+          wrap.style.alignItems = "center";
+          wrap.style.justifyContent = "center";
+          wrap.style.gap = "14px";
+          wrap.style.background = "#F6FFF4";
+          wrap.style.color = "#1B5E20";
+          wrap.style.fontFamily = "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,system-ui,sans-serif";
+          wrap.style.textAlign = "center";
+          wrap.style.padding = "24px";
+          wrap.style.boxSizing = "border-box";
+
+          var img = document.createElement("img");
+          img.src = "/icon-parents-192.png";
+          img.alt = "";
+          img.width = 72;
+          img.height = 72;
+          img.style.borderRadius = "18px";
+          img.style.boxShadow = "0 10px 30px -12px rgba(27,94,32,0.35)";
+
+          var title = document.createElement("div");
+          title.textContent = "We hit a snag starting Sprouts";
+          title.style.fontSize = "19px";
+          title.style.fontWeight = "700";
+          title.style.lineHeight = "1.25";
+
+          var desc = document.createElement("div");
+          desc.textContent = "Please reload the app. If it still does not open, go back to sign in or contact your school.";
+          desc.style.fontSize = "14px";
+          desc.style.lineHeight = "1.45";
+          desc.style.opacity = "0.75";
+          desc.style.maxWidth = "340px";
+
+          var reload = document.createElement("button");
+          reload.type = "button";
+          reload.textContent = "Reload";
+          reload.addEventListener("click", function () { window.location.reload(); });
+          applyButtonStyle(reload, true);
+
+          var signIn = document.createElement("button");
+          signIn.type = "button";
+          signIn.textContent = "Go to sign in";
+          signIn.addEventListener("click", function () { window.location.href = "/auth?app=parents"; });
+          applyButtonStyle(signIn, false);
+
+          wrap.appendChild(img);
+          wrap.appendChild(title);
+          wrap.appendChild(desc);
+          wrap.appendChild(reload);
+          wrap.appendChild(signIn);
+          root.appendChild(wrap);
+        }
+
+        window.addEventListener("error", showStartupError);
+        window.addEventListener("unhandledrejection", showStartupError);
+      })();
+    </script>
+  </head>
+
+  <body>
+    <div id="root">
+      <!-- Branded startup splash. Renders before React mounts and is
+           replaced as soon as React paints the first frame. Keeps the
+           installed PWA from showing a black/blank screen on launch. -->
+      <div id="app-boot-splash" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#F6FFF4;color:#1B5E20;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased;z-index:9999;">
+        <img src="/icon-parents-192.png" alt="" width="84" height="84" style="border-radius:22px;box-shadow:0 10px 30px -12px rgba(27,94,32,0.35);animation:appBootPulse 1.6s ease-in-out infinite;" />
+        <div style="font-size:15px;font-weight:600;letter-spacing:0.2px;opacity:0.85;">Preparing your child's day…</div>
+        <div aria-hidden="true" style="width:120px;height:4px;border-radius:999px;background:#EAF7E8;overflow:hidden;">
+          <div style="height:100%;width:40%;background:linear-gradient(90deg,#7CB342,#43A047);border-radius:999px;animation:appBootSlide 1.4s ease-in-out infinite;"></div>
+        </div>
+        <style>
+          @keyframes appBootPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.92; } }
+          @keyframes appBootSlide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+        </style>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
