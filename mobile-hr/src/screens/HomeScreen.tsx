@@ -158,7 +158,19 @@ export function HomeScreen() {
       onRefresh={() => dashboardQuery.refetch()}
       refreshing={dashboardQuery.isRefetching}
     >
-      <ScreenHeader title="Home" subtitle={format(now, "EEEE, d MMMM")} />
+      <ScreenHeader
+        title="Home"
+        subtitle={format(now, "EEEE, d MMMM")}
+        right={
+          <Pressable
+            onPress={() => navigation.navigate("Notifications")}
+            hitSlop={8}
+            style={styles.bellButton}
+          >
+            <Ionicons name="notifications-outline" size={20} color={color.ink} />
+          </Pressable>
+        }
+      />
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick actions</Text>
@@ -268,6 +280,14 @@ export function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  bellButton: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: color.paper,
+  },
   section: {
     paddingHorizontal: space.xl,
     marginBottom: space.xl,
